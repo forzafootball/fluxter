@@ -51,19 +51,15 @@ defmodule FluxterTest do
 
   test "get_config/2" do
     config = [
-      {TestFluxter,
-       [
-         host: "tortoise.tld",
-         port: 2233,
-         prefix: "bar"
-       ]},
-      host: "hare.tld",
-      port: 1122,
-      prefix: "foo"
+      fluxter: [
+        {TestFluxter, [host: "tortoise.tld", port: 2233, prefix: "bar"]},
+        host: "hare.tld",
+        port: 1122,
+        prefix: "foo"
+      ]
     ]
 
-    # TODO: Use put_all_env/3 with Elixir v1.9 and higher.
-    for {key, value} <- config, do: Application.put_env(:fluxter, key, value)
+    :ok = Application.put_all_env(config)
 
     try do
       assert Fluxter.get_config(TestFluxter, []) == %{
@@ -84,10 +80,10 @@ defmodule FluxterTest do
     {:ok, server} = EchoServer.start_link(9092)
     :ok = EchoServer.set_current_test(server, self())
 
-    options = [port: 9092, prefix: "xyzzy"]
+    options = [host: {127, 0, 0, 1}, port: 9092, prefix: "xyzzy"]
     {:ok, _} = OtherFluxter.start_link(options)
 
-    OtherFluxter.write('foo', bar: 2)
+    OtherFluxter.write(~c"foo", bar: 2)
     assert_receive {:echo, "xyzzy_foo bar=2i"}
   after
     :code.delete(OtherFluxter)
@@ -108,7 +104,7 @@ defmodule FluxterTest do
     TestFluxter.write("foo", "data\"")
     assert_receive {:echo, "foo value=\"data\\\"\""}
 
-    TestFluxter.write('foo', true)
+    TestFluxter.write(~c"foo", true)
     assert_receive {:echo, "foo value=true"}
     TestFluxter.write("foo", false)
     assert_receive {:echo, "foo value=false"}
