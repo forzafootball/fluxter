@@ -38,6 +38,10 @@ jobs:
         versions:
           - otp: "24"
             elixir: "1.14"
+          - otp: "26"
+            elixir: "1.18"
+          - otp: "27"
+            elixir: "1.18"
 
     env:
       MIX_ENV: test
